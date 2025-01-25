@@ -13,16 +13,15 @@ import matplotlib.pyplot as plt
 dataset_path = "dataset"
 model_path = "model.keras"
 
-# CNN modelini oluşturma
 def create_model():
     model = Sequential([
-        Input(shape=(64, 64, 3)), # Input Layer: 64x64 piksel ve RGB
-        layers.Conv2D(16, (3, 3), activation="relu"), # İlk evrişim katmanı. 16 filtreyle çalışıyor ve filtre boyutu 3x3
-        layers.MaxPooling2D((2, 2)), # Maksimum havuzlama işlemi yapar. Böylece görüntü boyutu yarıya iner
-        layers.Conv2D(32, (3, 3), activation="relu"), # İkinci evrişim katmanı
+        Input(shape=(64, 64, 3)),
+        layers.Conv2D(16, (3, 3), activation="relu"),
         layers.MaxPooling2D((2, 2)),
-        layers.Flatten(), # Görüntü verilerini tek boyutlu bir vektöre dönüştürme
-        layers.Dense(26, activation="softmax") # Output Layer: 26 sınıf (toplam harf sayısı)
+        layers.Conv2D(32, (3, 3), activation="relu"),
+        layers.MaxPooling2D((2, 2)),
+        layers.Flatten(),
+        layers.Dense(26, activation="softmax")
     ])
     
     model.compile(
@@ -33,7 +32,6 @@ def create_model():
     
     return model
 
-# Veri setinden görüntü yollarını ve etiketlerini alma
 def get_image_paths_and_labels(dataset_path):
     image_paths = []
     labels = []
@@ -50,7 +48,6 @@ def get_image_paths_and_labels(dataset_path):
                     
     return image_paths, labels
 
-# Görüntüleri yükler ve boyutlandırma
 def load_images(image_paths, labels):
     images = []
     for img_path in image_paths:
@@ -60,7 +57,6 @@ def load_images(image_paths, labels):
         
     return np.array(images), np.array(labels)
 
-# Veri arttırma için generator oluşturma
 def create_data_generator():
     return ImageDataGenerator(
         rescale=1./255,
@@ -71,11 +67,10 @@ def create_data_generator():
         fill_mode="nearest"
     )
 
-# Eğitim geçmişini görselleştirme
+
 def plot_training_history(history):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
 
-    # Doğruluk grafiği
     ax1.plot(history.history["accuracy"], label="Training Accuracy", marker="o", color="blue")
     ax1.plot(history.history["val_accuracy"], label="Validation Accuracy", marker="o", color="cyan")
     ax1.set_title("Model Accuracy")
@@ -84,7 +79,6 @@ def plot_training_history(history):
     ax1.legend()
     ax1.grid()
 
-    # Kayıp grafiği
     ax2.plot(history.history["loss"], label="Training Loss", marker="x", color="red")
     ax2.plot(history.history["val_loss"], label="Validation Loss", marker="x", color="orange")
     ax2.set_title("Model Loss")
@@ -97,30 +91,24 @@ def plot_training_history(history):
     plt.show()
 
 def main():
-    # Model oluşturma
     model = create_model()
     
-    # Veri setini yükleme
     image_paths, labels = get_image_paths_and_labels(dataset_path)
     x_data, y_data = load_images(image_paths, labels)
     
-    # Eğitim ve doğrulama seti ayrımı
     x_train, x_val, y_train, y_val = train_test_split(
         x_data, y_data, test_size=0.2, random_state=42
     )
     
-    # Veri arttırma
     datagen = create_data_generator()
     datagen.fit(x_train)
     
-    # Erken durdurma
     early_stopping = EarlyStopping(
         monitor="val_loss",
         patience=5,
         restore_best_weights=True
     )
     
-    # Model eğitimi
     history = model.fit(
         datagen.flow(x_train, y_train, batch_size=32),
         validation_data=(x_val/255.0, y_val),
@@ -128,10 +116,8 @@ def main():
         callbacks=[early_stopping]
     )
     
-    # Modeli kaydetme
     model.save(model_path)
     
-    # Eğitim sonuçlarını görselleştirme
     plot_training_history(history)
 
 if __name__ == "__main__":
