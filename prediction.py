@@ -103,6 +103,12 @@ def main():
     class_mapping = get_class_mapping()
     cap = cv2.VideoCapture(0)
 
+    prev_prediction = "DNE"
+    prediction_counter = 0
+    last_stable_prediction = "DNE"
+    stable_frames = 20
+    output_text = ""
+
     while True:
         success, frame = cap.read()
         if not success:
@@ -136,13 +142,32 @@ def main():
                     y_offset = (square_size - hand_square.shape[0]) // 2
                     x_offset = (square_size - hand_square.shape[1]) // 2
                     
-                    square_img[y_offset:y_offset+hand_square.shape[0], 
-                             x_offset:x_offset+hand_square.shape[1]] = hand_square
+                    square_img[y_offset:y_offset+hand_square.shape[0], x_offset:x_offset+hand_square.shape[1]] = hand_square
                     
                     predicted_character = predict_hand_sign(model, square_img, class_mapping)
 
-        cv2.putText(frame, f"Predicted: {predicted_character}", (20, 50), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
+            if predicted_character == prev_prediction:
+                prediction_counter += 1
+                if prediction_counter >= stable_frames and predicted_character != last_stable_prediction:
+                    print(f"Stable Prediction: {predicted_character}")
+                    last_stable_prediction = predicted_character
+                    output_text += predicted_character
+            else:
+                prediction_counter = 0
+
+            prev_prediction = predicted_character
+
+        else:
+            prediction_counter = 0
+            prev_prediction = "DNE"
+
+        status_text = f"Predicted: {predicted_character}"
+        if prediction_counter >= stable_frames:
+            status_text += " (Stable)"
+
+        cv2.putText(frame, status_text, (30, 60), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 6)
+        cv2.putText(frame, output_text, (30, 150), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 6)
+
         cv2.imshow("Sign Language Detection", frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
