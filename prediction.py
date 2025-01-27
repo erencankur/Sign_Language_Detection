@@ -67,7 +67,6 @@ def get_square_boundaries(boundaries, frame_shape):
     
     square_size = int(max(width_hand, height_hand) + 100)
     
-    # Yeni sınırları hesaplama
     new_x_min = center_x - square_size // 2
     new_y_min = center_y - square_size // 2
     new_x_max = center_x + square_size // 2
